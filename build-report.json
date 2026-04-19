@@ -1,0 +1,84 @@
+{
+  "pipeline": "/animated-website",
+  "generatedAt": "2026-04-19T00:00:00Z",
+  "briefSource": "voidgate-brief.txt",
+  "mcp": {
+    "stitch": "fired",
+    "firecrawl": "fired",
+    "magic": "fired"
+  },
+  "skills": {
+    "brand": "fired",
+    "ui-ux-pro-max": "fired",
+    "design-system": "fired",
+    "design": "fired",
+    "ui-styling": "fired",
+    "nano-banana-2": "skipped"
+  },
+  "images": {
+    "hero-terminal": "tier-3-svg",
+    "gallery-nft": "tier-3-svg",
+    "log-001": "tier-3-svg",
+    "log-042": "tier-3-svg",
+    "log-116": "tier-3-svg",
+    "ep-001": "tier-3-svg",
+    "ep-002": "tier-3-svg",
+    "about-network": "tier-3-svg"
+  },
+  "stitch": {
+    "projectId": "pending",
+    "screens": [
+      { "title": "Boot Overlay + Navbar" },
+      { "title": "Hero / Discover" },
+      { "title": "Story" },
+      { "title": "Gallery" },
+      { "title": "Journal" },
+      { "title": "Media / Transmissions" },
+      { "title": "About + Footer" }
+    ]
+  },
+  "firecrawl": {
+    "url": "https://opensea.io/",
+    "purpose": "collection grid layout, asset card patterns, filtering UX, hero scale",
+    "notesBorrowed": ["collection grid layout", "asset card patterns", "hero scale"],
+    "notesAvoided": ["warm or colorful branding", "light palette", "marketplace chrome"]
+  },
+  "designTokens": {
+    "colorBg": "#04011a",
+    "colorSurface": "rgba(6,3,24,0.52)",
+    "colorPrimary": "#7c4dff",
+    "colorSecondary": "#00e5ff",
+    "colorGlitch": "#ff2d55",
+    "colorSignal": "#00ff9f",
+    "colorText": "#f0f3ff",
+    "colorTextSecondary": "#c2ccdf",
+    "colorTextGhost": "#7b8aaa",
+    "fontDisplay": "Orbitron",
+    "fontMono": "IBM Plex Mono",
+    "style": "Deep-Space Glassmorphism + CRT Corruption + Cyberpunk",
+    "pattern": "Boot Overlay → Full-VP Hero (WebGL) → Story → Gallery Grid → Journal → Transmissions → About → Footer"
+  },
+  "animations": {
+    "bootSequence": "monospace log-line stagger 200ms → static flash 80ms → fade 2.5s total",
+    "glitchCycle": "6s infinite, CSS clip-path, ::before/::after pseudo-elements",
+    "heroFloat": "translateY 0↔-12px, 4s ease-in-out infinite",
+    "cardTilt3D": "CSS perspective 1000px + JS mousemove, ±5°, 300ms",
+    "statCounters": "countUp on IntersectionObserver, 1.5s ease-out",
+    "sectionReveal": "translateX(-10px)→0 + opacity 0→1, threshold 0.15, stagger 80ms",
+    "webglStarfield": "Three.js r134, deferred load post-boot, paused on prefers-reduced-motion"
+  },
+  "accessibility": {
+    "skipToContent": true,
+    "ariaLiveBootOverlay": true,
+    "prefersReducedMotion": "collapse transforms to opacity-only 200ms",
+    "focusVisible": "2px cipher-cyan ring",
+    "wcagTarget": "AA"
+  },
+  "performance": {
+    "lcpTarget": "< 2.5s",
+    "clsTarget": "< 0.05",
+    "lazyImages": true,
+    "deferredWebGL": true,
+    "willChangeOnlyActiveGlass": true
+  }
+}

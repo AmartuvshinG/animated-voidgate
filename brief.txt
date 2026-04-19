@@ -1,0 +1,350 @@
+==============================================================
+SITE: VOIDGATE
+==============================================================
+
+ROLE / CONTEXT
+--------------
+Role: You are Narrative Director and Lead Designer for VOIDGATE.
+Context: VOIDGATE is a decentralised interactive storytelling platform — a
+living sci-fi universe built on-chain where ownership means authorship and
+every Guardian shapes the narrative. The platform issues story NFTs (the
+Genesis Collection), publishes encrypted transmissions (episodes), and
+maintains a living lore archive called The Vault. You have commissioned a
+world-class interface designer to build the VOIDGATE Story site — the primary
+portal for the VOIDGATE universe.
+
+BUILD STACK
+-----------
+1. Stitch (layout generation)
+2. UI UX Pro Max (style / palette / typography selection)
+3. Firecrawl (reference scrape)
+4. Magic / 21st.dev (hero and feature blocks)
+5. Nano Banana 2 (hero + world imagery)
+6. Brand skill (voice + messaging)
+7. Design skill (logo, icons, OG image)
+8. Design System skill (token architecture)
+9. UI Styling skill (interactive components)
+
+
+PURPOSE
+-------
+Story hub and universe portal — introduce the VOIDGATE lore, showcase the
+Genesis NFT collection, surface encrypted transmission episodes, provide
+archive/journal access, and onboard new Guardians through the Discover →
+Story → Join funnel.
+
+
+==============================================================
+STEP 2 — BRAND VOICE (for `brand` skill)
+==============================================================
+
+Voice archetype: The Encrypted Oracle — ancient intelligence speaking through
+corrupted channels. Speaks in transmission bursts: precise, encrypted, urgent.
+Every line reads like a decrypted fragment from a dying star.
+
+Tone dimensions (scale 1–5):
+- Formal ↔ Casual:        2 (formal — protocol language, no slang)
+- Serious ↔ Playful:      1 (dead serious — the void does not joke)
+- Reserved ↔ Expressive:  4 (expressive — but through imagery, not adjectives)
+- Modern ↔ Timeless:      3 (post-human future that feels ancient)
+
+Voice rules:
+- Protocol language: "transmission," "Guardian," "the void," "the Archive,"
+  "the protocol," "encoded," "decrypted," "signal." Max 3 per section.
+- Fragmented syntax is permitted in headlines: "// SIGNAL ACQUIRED." ">> ENTER
+  THE VOID." "VOIDGATE v2.4.1 — ax7-09140931."
+- Body copy: full sentences, present tense, active voice.
+- Never: "innovative," "NFT drop," "mint" (use "claim"), "holders" (use
+  "Guardians"), "community" alone (use "the pack of Guardians"), "exciting."
+
+Words to use:   Guardian, protocol, void, Archive, encrypted, transmission,
+                signal, genesis, faction, claimed, lore, on-chain, universe
+Words to avoid: mint, holders, NFT drop, community, exciting, innovative,
+                journey, ecosystem, world-class, amazing
+
+Messaging framework:
+- Tagline (≤7 words):        "Enter the void. Shape the protocol."
+- Value prop (≤20 words):    "A living sci-fi universe where your assets
+                              evolve, factions clash, and the protocol
+                              rewrites itself with every transaction."
+- Key phrases (3–5):          "// SIGNAL ACQUIRED",
+                              "Ownership means authorship",
+                              "The Archive remembers",
+                              "Every Guardian shapes the narrative",
+                              "The void is not empty — it is waiting"
+
+
+==============================================================
+STEP 3 — DESIGN SYSTEM (for `ui-ux-pro-max` + `design-system`)
+==============================================================
+
+Style keywords:   deep space, cyberpunk, glitch, neon glow, glassmorphism,
+                  CRT scanlines, monospaced, encrypted, dark mode only,
+                  volumetric light, holographic
+
+Preferred style direction: deep-space glassmorphism with CRT corruption — vast
+near-black backgrounds lit by neon glow clusters (purple, cyan, emerald), glass
+panels with strong backdrop blur, glitch text animations on key headings,
+scan-line overlay at 4% opacity, and Three.js WebGL starfield behind all content.
+
+COLOR SYSTEM:
+- Background:      deep space navy #04011a
+- Surface-glass:   rgba(6,3,24,.52) with backdrop-filter blur 18px
+- Surface-light:   rgba(6,3,24,.36) with backdrop-filter blur 12px
+- Glass border:    rgba(124,77,255,.28)
+
+- Void purple:     #7c4dff  — primary accent (glow: 0 0 18px #7c4dff, 0 0 45px rgba(124,77,255,.55))
+- Cipher cyan:     #00e5ff  — secondary accent (glow: 0 0 18px #00e5ff)
+- Breach red:      #ff2d55  — glitch color, warning states
+- Signal green:    #00ff9f  — success, online, active states
+
+- Text primary:    #f0f3ff
+- Text secondary:  #c2ccdf
+- Text ghost:      #7b8aaa
+
+Contrast requirement: WCAG AA on all body text. Glow colors used for decoration
+only — never as sole contrast carrier.
+
+TYPOGRAPHY:
+- Display:     Orbitron 400–900 — geometric space typeface, uppercase, tracking
+               .2–.35em — for hero headings, logo, section labels
+- Body/Mono:   IBM Plex Mono — all body copy, captions, code, interface labels
+- Type scale:  Display hero: clamp(3.75rem, 8vw, 7rem)
+               Section label: 10px / uppercase / .35em tracking
+               Body: 14–16px / line-height 1.7
+               Mono UI: 11–13px / line-height 1.8
+
+SPACING & LAYOUT:
+- Spacing scale (4px base): 4, 8, 12, 20, 32, 48, 64, 96, 128
+- Container max-width: 1280px
+- Grid: 12-col desktop, 4-col mobile
+- Section vertical rhythm: 96px desktop / 64px mobile
+
+RADII:
+- Glass panels: 12px
+- Cards: 8px
+- Buttons: 4px (slight radius, not pill)
+- Tags: 2px
+
+ELEVATION: glow-based, no traditional box-shadow
+- Purple panel: box-shadow 0 0 18px rgba(124,77,255,.28), 0 0 40px rgba(124,77,255,.12)
+- Cyan panel:   box-shadow 0 0 18px rgba(0,229,255,.2)
+
+MOTION LANGUAGE:
+- Glitch cycle:  6s infinite — 84% stable, brief 15% corrupted (translate
+                 ±3px, text-shadow splits to breach-red + cipher-cyan)
+- Easing:        cubic-bezier(.4,0,.2,1) for panels; linear for scrolling/looping
+- Durations:     micro 150ms, standard 300ms, reveal 600ms, boot 2.5s
+- Boot sequence: monospace log lines appear one by one (stagger 200ms each),
+                 then static flash, then fade out — total 2.5s
+- Reveal:        translateX(-10px)→0 + opacity 0→1 per section entry
+- Hover:         glass panels lift: border-color brightens to full accent,
+                 glow intensifies, scale 1.01, 250ms
+- Float:         hero elements translateY 0↔-12px, 4s ease-in-out infinite
+- prefers-reduced-motion: collapse all transform to opacity-only 200ms
+
+
+==============================================================
+STEP 4 — REFERENCE SCRAPE (for Firecrawl)
+==============================================================
+Reference URL: https://opensea.io/
+
+Borrow: collection grid layout, asset card patterns, filtering UX, hero
+scale.
+Avoid: any warm or colorful branding — VOIDGATE palette is deep space only.
+
+
+==============================================================
+STEP 5 — SECTIONS & LAYOUT (for Stitch)
+==============================================================
+Section order and goal:
+
+1. Boot Overlay   — fullscreen deep-space black, monospace log lines (stagger
+                    200ms each: "INITIALIZING VOIDGATE PROTOCOL...",
+                    "LOADING ARCHIVE...", "DECRYPTING SIGNAL..."),
+                    static flash, then fade to transparent — total 2.5s
+2. Navbar         — fixed glass panel, VOIDGATE wordmark (Orbitron) left,
+                    nav links right (Discover, Story, Gallery, Journal, Media,
+                    About), "Enter Vault" CTA button (void-purple border/glow)
+3. Hero / Discover — full viewport, Three.js WebGL rotating star field +
+                    floating particle clusters, glitch VOIDGATE heading,
+                    tagline, two CTAs ("Claim Genesis" / "Read the Archive"),
+                    small version badge "VOIDGATE v2.4.1", terminal window
+                    floating right with boot-in animation
+4. Story          — 2-col: universe lore paragraph left, encrypted stat grid
+                    right (Guardians, Factions, Transmissions, Logs) with
+                    cyan glow; then full-width cinematic world description
+5. Gallery        — NFT genesis collection: large featured card + 2 secondary
+                    cards, each glass panel with image, collection name, item
+                    count, rarity badges, "View Collection" CTA
+6. Journal        — 3-card editorial grid: LOG-001 (big left), LOG-042
+                    (top right), LOG-116 (bottom right) — each is a glass
+                    cinematic panel with cover image, log ID, title, excerpt,
+                    3D hover tilt effect
+7. Media / Transmissions — 2 large episode panels (EP-001, EP-002): cover
+                    image, episode label (cyan), title (Orbitron), encrypted
+                    description, "Decrypt Transmission" CTA
+8. About          — centered single column: VOIDGATE mission statement,
+                    social links (X, Discord), "Join the Guardians" CTA
+9. Footer         — VOIDGATE wordmark, nav links row, copyright, version tag,
+                    "All rights reserved"
+
+Hero 21st.dev prompt:
+  "A dark deep-space hero section for a sci-fi narrative platform — massive
+   glitching headline with chromatic aberration effect, void purple and
+   cyan neon glow accents, WebGL star field background, floating terminal
+   window, two glass CTA buttons, and subtle scan-line overlay. Monospace
+   typography throughout. Full viewport height."
+
+
+==============================================================
+STEP 6 — IMAGERY (for Nano Banana 2)
+==============================================================
+Global art direction: deep-space cinematic render, volumetric neon glow
+(purple + cyan), no humans visible — abstract environments or artifact close-
+ups only. Film grain texture. No text in images. No logos.
+
+Aspect ratios:
+- Hero terminal:  4:3 (800×600 — terminal window prop)
+- Gallery NFT:    1:1 (1080×1080 per NFT card)
+- Journal covers: 16:9 (1280×720 per log entry)
+- Episode covers: 16:9 (1280×720 per transmission)
+- OG/social:      1200×630
+
+Per-image prompts:
+- Hero terminal   — glowing monospace terminal screen floating in void space,
+                    void-purple phosphor text on black CRT surface, subtle
+                    scan-line interference, close-up, shallow DoF
+- Gallery NFT     — abstract crystalline artifact suspended in void space,
+                    void-purple neon lattice structure, cyan energy filaments,
+                    deep black vacuum background, 1:1 framing
+- LOG-001         — encrypted data stream corridor: infinite tunneling
+                    perspective of glowing runes, purple-cyan gradient walls,
+                    atmospheric fog, cinematic wide
+- LOG-042         — fractured space-time anomaly: crystalline void sphere
+                    with refracted light caustics, deep space background,
+                    cold colour palette
+- LOG-116         — derelict orbital station exterior: hull corrosion, void
+                    purple emergency lighting through portholes, vast star
+                    field beyond, dramatic foreshortening
+- EP-001          — genesis moment: singularity point of blinding light in
+                    deep void, concentric energy rings expanding outward,
+                    void purple and cyan, near-infrared palette
+- EP-002          — faction assembly: silhouettes of floating geometric
+                    entities in void space, each emitting a different neon
+                    color (purple, cyan, red, green), arranged in circle
+- About / social  — top-down abstract network graph: nodes as glowing void
+                    orbs connected by luminous filaments, purple + cyan,
+                    deep black void
+
+
+==============================================================
+STEP 7 — BRAND ASSETS (for `design` skill)
+==============================================================
+
+LOGO brief:
+- Concept:    a hexagonal void gate / portal mark — geometric, symmetric,
+              with a central gap suggesting a threshold. Rendered in void
+              purple with a cipher-cyan inner glow.
+- Wordmark:   "VOIDGATE" in Orbitron 700, letter-spacing .3em, uppercase.
+- Variants:   primary (mark + wordmark), icon-only (hex gate), inverse
+              (on light — for press materials only), monochrome.
+- Export:     SVG, PNG @2x, favicon 32/48/180px.
+
+ICON SET (SVG, 1.5px stroke, square caps, minimal):
+- portal-hex     (Hero / logo mark variant)
+- archive-box    (Gallery / collection)
+- scroll-lock    (Journal / logs)
+- broadcast      (Media / transmissions)
+- user-dot       (About / Guardians)
+- shield-fragment (Factions)
+- signal-wave    (Story / lore)
+- lock-glyph     (encrypted content)
+- chevron-right  (CTA arrow)
+- x-social       (footer)
+
+OG / SOCIAL CARD (1200×630):
+- Deep-space background, EP-001 image fills right 60%, hard vertical glass
+  edge with void-purple glow, VOIDGATE wordmark top-left in white Orbitron,
+  tagline below in IBM Plex Mono, cyan accent stripe 2px bottom edge.
+
+
+==============================================================
+STEP 8 — INTERACTIVE COMPONENTS (for `ui-styling` / shadcn)
+==============================================================
+
+Required components:
+- Boot overlay        — timed sequence, aria-live, skip on prefers-reduced-motion
+- Glass card (Journal, Media, Gallery) — 3D tilt on hover (max 5°), glow border
+  intensifies, image scales 1.05, 300ms — implemented via CSS perspective + JS
+  mousemove; no tilt on touch/mobile
+- Glitch heading      — CSS ::before + ::after pseudo-elements, clip-path
+  animation on 6s cycle — applied to main VOIDGATE h1 and section labels
+- Terminal window     — fixed-width glass panel, monospace type, cursor blink,
+  scroll on overflow, initial boot-in animation (lines appear one by one)
+- Stat counters       — countUp on IntersectionObserver enter, 1.5s ease-out,
+  void-purple glow intensifies as number reaches target
+- CTA buttons         — glass panel: default (purple border + glow), hover
+  (filled purple + brighten), active (scale .98), focus-visible (2px cyan ring)
+- Custom cursor       — hidden on touch; desktop: 12px void-purple dot with
+  pulse-dot glow animation; enlarges to 24px on interactive elements
+- Scan-line overlay   — position:fixed, repeating-linear-gradient, 4% opacity,
+  pointer-events:none, z-index 9000
+
+Interaction states on all interactive elements:
+default, hover (glow brighten), active (void fills), focus-visible (2px cyan
+ring), disabled (opacity .3, glow removed).
+
+
+==============================================================
+STEP 9 — ASSEMBLE & ANIMATE (final index.html)
+==============================================================
+
+RESPONSIVE BREAKPOINTS: 640 (sm), 1024 (lg), 1280 (xl). Mobile-first.
+On mobile: custom cursor hidden, boot overlay shortened to 1.5s, 3D card tilt
+disabled, journal grid 1-col, media grid 1-col, hero terminal image hidden
+below sm.
+
+PERFORMANCE BUDGET:
+- LCP < 2.5s
+- CLS < 0.05
+- Three.js star field: deferred JS load after boot overlay completes; paused
+  or replaced with CSS gradient on prefers-reduced-motion
+- All section images: loading="lazy", decoding="async"
+- Glass backdrop-filter: will-change: transform applied only to active panels
+
+SEO / META:
+- <title>VOIDGATE | Story</title>
+- meta description: "A living sci-fi universe where your assets evolve,
+  factions clash, and the protocol rewrites itself. Enter the void."
+  (≤155 chars)
+- OG tags + Twitter card: summary_large_image, og:type=website
+- JSON-LD: CreativeWork schema with description and url
+
+ACCESSIBILITY:
+- Skip-to-content link
+- Boot overlay: aria-live="polite", aria-hidden="true" after complete
+- All images: descriptive alt text from imagery prompts above
+- Glitch animation: respects prefers-reduced-motion (removes clip-path
+  animation, retains base styles)
+- Custom cursor: hidden + body cursor:auto on touch devices and when
+  prefers-reduced-motion
+- Focus-visible: 2px cipher-cyan ring on all interactive elements
+
+ANIMATION ON ASSEMBLY:
+- Boot overlay:    log lines translateX(-10px)→0 + opacity 0→1, stagger 200ms;
+                   static flash (white, 80ms) at 2.3s; overlay opacity 0→
+                   visibility hidden at 2.5s
+- Hero heading:    glitch-base 6s infinite (defined in CSS); static on first
+                   paint, glitch starts after boot completes
+- Hero elements:   float (translateY 0↔-12px, 4s ease-in-out infinite)
+- Section reveals: translateX(-10px)→0 + opacity 0→1, IntersectionObserver
+                   threshold 0.15, stagger 80ms between siblings
+- Card hover tilt: CSS perspective 1000px + JS mousemove → rotateX/Y ±5°,
+                   transition 300ms ease-out; resetOnLeave
+- Stat counters:   countUp 0→target, 1.5s ease-out, on IntersectionObserver
+- Marquee:         not used in VOIDGATE — replaced by encrypted terminal ticker
+                   inside terminal window component
+
+OUTPUT FILE: index.html (overwrite if exists — this is the rebuild)
+SIDECAR:     build-report.json (same directory)
