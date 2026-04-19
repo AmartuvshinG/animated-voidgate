@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>VAULT ACCESS — VOIDGATE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <style>
+    :root {
+      --v:#7c4dff; --c:#00e5ff; --r:#ff2d55; --g:#00ff9f;
+      --t1:#f0f3ff; --t2:#c2ccdf; --t3:#7b8aaa;
+      --gv:0 0 18px #7c4dff,0 0 45px rgba(124,77,255,.55);
+      --gc:0 0 18px #00e5ff,0 0 45px rgba(0,229,255,.55);
+      --gg:0 0 12px #00ff9f,0 0 30px rgba(0,255,159,.45);
+      --asset-color:#7c4dff;
+      --bg1:#090613; --bg2:#130d24; --bg3:#1a1332;
+      --bg4:rgba(157,239,255,.12); --bg5:rgba(124,77,255,.18);
+      --zone-glow:rgba(124,77,255,.28);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:
+      radial-gradient(circle at 18% 16%, var(--bg4), transparent 0 20%),
+      radial-gradient(circle at 78% 24%, var(--bg5), transparent 0 24%),
+      linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 38%, var(--bg3) 100%);
+      color:var(--t1);font-family:"IBM Plex Mono",monospace;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:2;
+      background:
+      radial-gradient(circle at 50% 30%, transparent 0 18%, rgba(255,255,255,.03) 48%, rgba(0,0,0,.12) 100%),
+      linear-gradient(180deg, rgba(255,255,255,.05), transparent 24%, transparent 76%, rgba(0,0,0,.18));
+    }
+    body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9000}
+
+    #bg-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
+    #zone-sky{position:fixed;inset:-8%;pointer-events:none;z-index:1;mix-blend-mode:screen;overflow:hidden}
+    #zone-sky::before,#zone-sky::after{content:'';position:absolute;border-radius:50%;filter:blur(80px)}
+    #zone-sky::before{width:44vw;height:22vw;left:-6vw;top:10vh;background:radial-gradient(ellipse at 35% 50%, rgba(255,255,255,.16), var(--bg4) 28%, transparent 74%);animation:zone-drift 20s ease-in-out infinite alternate}
+    #zone-sky::after{width:40vw;height:18vw;right:-8vw;top:22vh;background:radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.12), var(--bg5) 34%, transparent 76%);animation:zone-drift-b 24s ease-in-out infinite alternate}
+    @keyframes zone-drift{0%{transform:translate3d(-3%,0,0) rotate(-8deg)}100%{transform:translate3d(7%,-4%,0) rotate(-2deg)}}
+    @keyframes zone-drift-b{0%{transform:translate3d(6%,0,0) rotate(10deg)}100%{transform:translate3d(-5%,3%,0) rotate(4deg)}}
+
+    /* ── Decrypt overlay ── */
+    #decrypt-overlay{
+      position:fixed;inset:0;z-index:9990;background:#04011a;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;
+    }
+    #decrypt-canvas{position:absolute;inset:0;opacity:.55}
+    #decrypt-ui{position:relative;z-index:1;text-align:center;width:340px}
+    .decrypt-bar-wrap{width:100%;height:2px;background:rgba(255,255,255,.06);margin:1rem 0}
+    #decrypt-bar{height:2px;width:0;background:var(--asset-color);transition:width .08s;box-shadow:0 0 12px var(--asset-color),0 0 30px var(--asset-color)}
+    #decrypt-status{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--c);min-height:1.5em}
+    #decrypt-log{font-size:10px;color:var(--t3);letter-spacing:.15em;margin-top:.5rem;min-height:2em;line-height:1.8}
+    .decrypt-logo{margin-bottom:1.5rem}
+
+    /* ── Vault opened flash ── */
+    #vault-opened{
+      position:fixed;inset:0;z-index:9989;pointer-events:none;
+      background:radial-gradient(circle at 50% 50%, var(--asset-color), transparent 70%);
+      opacity:0;transition:opacity .25s ease;
+    }
+
+    /* ── Main content ── */
+    #vault-content{
+      position:relative;z-index:1;min-height:100vh;
+      opacity:0;transition:opacity .8s ease;padding-top:80px;
+    }
+    #vault-content.visible{opacity:1}
+
+    /* ── Back bar ── */
+    #back-bar{
+      position:fixed;top:0;left:0;right:0;z-index:200;
+      padding:1rem 1.5rem;display:flex;align-items:center;justify-between;gap:1rem;
+      background:rgba(4,2,18,.65);backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(124,77,255,.2);
+    }
+
+    /* ── Glass ── */
+    .glass{background:rgba(6,3,24,.52);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(124,77,255,.28)}
+
+    /* ── Asset frame ── */
+    .asset-frame{
+      position:relative;overflow:hidden;
+      border:1px solid var(--asset-color);
+      box-shadow:0 0 60px rgba(124,77,255,.3),0 0 120px rgba(0,229,255,.1);
+    }
+    .asset-frame img{width:100%;height:100%;object-fit:cover;display:block;opacity:.92;transition:transform .8s ease,opacity .4s}
+    .asset-frame:hover img{transform:scale(1.04);opacity:1}
+    .frame-scan{position:absolute;inset:0;pointer-events:none;
+      background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,.018) 3px,rgba(0,229,255,.018) 4px);z-index:2}
+    .corner{position:absolute;width:20px;height:20px;pointer-events:none;z-index:3}
+    .ctla{top:8px;left:8px;border-top:1.5px solid var(--c);border-left:1.5px solid var(--c)}
+    .ctra{top:8px;right:8px;border-top:1.5px solid var(--c);border-right:1.5px solid var(--c)}
+    .cbla{bottom:8px;left:8px;border-bottom:1.5px solid var(--asset-color);border-left:1.5px solid var(--asset-color)}
+    .cbra{bottom:8px;right:8px;border-bottom:1.5px solid var(--asset-color);border-right:1.5px solid var(--asset-color)}
+
+    /* ── Stat row ── */
+    .stat-row{display:flex;justify-content:space-between;align-items:center;padding:.7rem 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:11px}
+    .stat-row:last-child{border-bottom:none}
+    .stat-label{color:var(--t3);letter-spacing:.2em;text-transform:uppercase}
+    .stat-val{color:var(--t1);font-weight:600;letter-spacing:.1em}
+
+    /* ── Animations ── */
+    @keyframes glitch-base{0%,84%,100%{transform:translate(0,0);text-shadow:var(--gv)}85%{transform:translate(-3px,0);text-shadow:-2px 0 var(--r),2px 0 var(--c)}87%{transform:translate(3px,0);text-shadow:2px 0 var(--r),-2px 0 var(--c)}89%{transform:translate(-1px,1px)}91%{transform:translate(2px,-1px);text-shadow:-2px 0 var(--c),2px 0 var(--r)}93%{transform:translate(0,0);text-shadow:var(--gv)}}
+    @keyframes gb{0%,83%,100%{clip-path:inset(0 0 100% 0);transform:translate(0,0)}84%{clip-path:inset(20% 0 60% 0);transform:translate(-4px,0);color:var(--r);opacity:.8}86%{clip-path:inset(60% 0 20% 0);transform:translate(4px,0)}88%{clip-path:inset(5% 0 80% 0);transform:translate(-2px,0);color:var(--c)}90%{clip-path:inset(80% 0 5% 0);transform:translate(2px,0)}92%{clip-path:inset(0 0 100% 0)}}
+    @keyframes ga{0%,83%,100%{clip-path:inset(0 0 100% 0)}84%{clip-path:inset(50% 0 30% 0);transform:translate(4px,0);color:var(--c);opacity:.7}87%{clip-path:inset(15% 0 70% 0);transform:translate(-3px,0)}89%{clip-path:inset(70% 0 10% 0);transform:translate(3px,0);color:var(--r)}91%{clip-path:inset(0 0 100% 0)}}
+    .glitch{position:relative;animation:glitch-base 6s infinite}
+    .glitch::before,.glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%}
+    .glitch::before{animation:gb 6s infinite;color:var(--r)}
+    .glitch::after{animation:ga 6s infinite .12s;color:var(--c)}
+
+    @keyframes pulse-dot{0%,100%{box-shadow:0 0 5px currentColor;opacity:.8}50%{box-shadow:0 0 16px currentColor,0 0 32px currentColor;opacity:1}}
+    .pulse-dot{animation:pulse-dot 2s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    .float{animation:float 4s ease-in-out infinite}
+
+    @keyframes orbit{from{transform:rotateX(72deg) rotateZ(0)}to{transform:rotateX(72deg) rotateZ(360deg)}}
+    .orbit-ring{position:absolute;border-radius:50%;border:1px solid rgba(124,77,255,.18);animation:orbit linear infinite}
+
+    @keyframes rev-up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    .rev{opacity:0;animation:rev-up .7s cubic-bezier(.16,1,.3,1) forwards}
+    .rev.d1{animation-delay:.1s}.rev.d2{animation-delay:.22s}.rev.d3{animation-delay:.34s}
+    .rev.d4{animation-delay:.46s}.rev.d5{animation-delay:.58s}.rev.d6{animation-delay:.7s}
+
+    @keyframes rev-l{from{opacity:0;transform:perspective(900px) rotateY(25deg) translateX(-40px)}to{opacity:1;transform:perspective(900px) rotateY(0) translateX(0)}}
+    @keyframes rev-r{from{opacity:0;transform:perspective(900px) rotateY(-25deg) translateX(40px)}to{opacity:1;transform:perspective(900px) rotateY(0) translateX(0)}}
+    .rev-l{opacity:0;animation:rev-l 1s cubic-bezier(.16,1,.3,1) .3s forwards}
+    .rev-r{opacity:0;animation:rev-r 1s cubic-bezier(.16,1,.3,1) .5s forwards}
+
+    @keyframes glow-border{0%,100%{box-shadow:0 0 25px rgba(124,77,255,.35),0 0 70px rgba(124,77,255,.12)}50%{box-shadow:0 0 40px rgba(0,229,255,.45),0 0 100px rgba(0,229,255,.18)}}
+    .cin-glow{animation:glow-border 5s ease-in-out infinite}
+
+    /* ── Scan animation ── */
+    @keyframes scan-anim{0%{top:0;opacity:0}5%{opacity:.6}95%{opacity:.6}100%{top:100%;opacity:0}}
+    #scan-line{position:absolute;left:0;right:0;height:2px;z-index:10;pointer-events:none;display:none;
+      background:linear-gradient(90deg,transparent,var(--c),var(--c),transparent);
+      box-shadow:0 0 12px var(--c),0 0 24px var(--c);
+      animation:scan-anim 1.8s ease-in-out}
+    #scan-line.active{display:block}
+
+    /* Scan button */
+    .scan-btn{cursor:pointer;transition:all .3s;user-select:none}
+    .scan-btn:hover{border-color:var(--c)!important;color:var(--c)!important;text-shadow:0 0 10px var(--c)}
+
+    /* ── Orbit rings on asset frame ── */
+    .frame-rings{position:absolute;inset:-30px;pointer-events:none;display:flex;align-items:center;justify-content:center}
+
+    /* Faction badge */
+    .faction-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid var(--asset-color);font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--asset-color);background:rgba(124,77,255,.06)}
+
+    @media (prefers-reduced-motion:reduce){
+      *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="zone-sky" aria-hidden="true"></div>
+
+<!-- ─── DECRYPT OVERLAY ─── -->
+<div id="decrypt-overlay">
+  <canvas id="decrypt-canvas"></canvas>
+  <div id="decrypt-ui">
+    <div class="decrypt-logo">
+      <svg class="float" width="56" height="56" viewBox="0 0 72 72" fill="none" style="margin:0 auto;display:block">
+        <polygon points="36,6 66,36 36,66 6,36" stroke="#7c4dff" stroke-width="1.5" fill="none"/>
+        <polygon points="36,18 54,36 36,54 18,36" stroke="#00e5ff" stroke-width="1" fill="none" opacity=".6"/>
+        <circle cx="36" cy="36" r="4" fill="#7c4dff" opacity=".9"/>
+        <circle cx="36" cy="36" r="9" stroke="#00e5ff" stroke-width=".75" fill="none" opacity=".35"/>
+      </svg>
+    </div>
+    <div id="decrypt-status">INITIALIZING VAULT BREACH...</div>
+    <div class="decrypt-bar-wrap"><div id="decrypt-bar"></div></div>
+    <div id="decrypt-log"></div>
+  </div>
+</div>
+
+<!-- ─── VAULT OPENED FLASH ─── -->
+<div id="vault-opened"></div>
+
+<!-- ─── MAIN CONTENT ─── -->
+<div id="vault-content">
+
+  <!-- Back bar -->
+  <div id="back-bar">
+    <a href="index.html" id="back-btn"
+       style="display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--t2);transition:color .2s;font-size:10px;letter-spacing:.3em;text-transform:uppercase"
+       onmouseover="this.style.color='var(--c)'" onmouseout="this.style.color='var(--t2)'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Return to Archive
+    </a>
+    <div style="font-family:Orbitron,monospace;font-size:9px;letter-spacing:.35em;color:var(--t3);text-transform:uppercase">VOIDGATE — VAULT ACCESS</div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.25em;text-transform:uppercase">
+      <div class="w-2 h-2 rounded-full bg-[var(--g)] pulse-dot" style="width:7px;height:7px;border-radius:50%;background:var(--g)"></div>
+      <span style="color:var(--g)">AUTHENTICATED</span>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-6 py-8">
+
+    <!-- Top section label -->
+    <div class="rev d1" style="margin-bottom:2.5rem;display:flex;align-items:center;gap:1rem">
+      <span style="font-size:9px;color:var(--v);letter-spacing:.35em;text-transform:uppercase;white-space:nowrap" id="vault-type-label">// Guardian Asset</span>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(124,77,255,.5),transparent)"></div>
+      <span id="vault-id-label" style="font-family:Orbitron,monospace;font-size:1.2rem;font-weight:700;color:#fff;letter-spacing:.3em">VAULT ACCESS</span>
+      <div style="width:40px;height:1px;background:rgba(124,77,255,.2)"></div>
+    </div>
+
+    <!-- Two-column layout -->
+    <div class="rev-l" style="display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start">
+
+      <!-- LEFT: Asset image -->
+      <div>
+        <div class="asset-frame cin-glow" style="height:clamp(380px,55vh,600px);position:relative" id="asset-frame">
+          <img id="asset-img" src="" alt="Vault Asset">
+          <div class="frame-scan"></div>
+          <div class="corner ctla"></div>
+          <div class="corner ctra"></div>
+          <div class="corner cbla"></div>
+          <div class="corner cbra"></div>
+          <div id="scan-line"></div>
+          <!-- asset number tag -->
+          <div id="asset-num-tag" style="position:absolute;top:12px;right:12px;z-index:5;
+               background:rgba(4,2,18,.9);border:1px solid rgba(124,77,255,.4);
+               padding:4px 12px;font-size:10px;letter-spacing:.25em;color:var(--c)"></div>
+          <!-- bottom overlay -->
+          <div style="position:absolute;bottom:0;left:0;right:0;z-index:4;
+               padding:1.5rem;background:linear-gradient(0deg,rgba(4,2,18,.95) 0%,transparent 100%)">
+            <div id="asset-class-tag" style="font-size:9px;letter-spacing:.35em;text-transform:uppercase;margin-bottom:6px;color:var(--v)"></div>
+            <div id="asset-name-bottom" style="font-family:Orbitron,monospace;font-size:14px;font-weight:700;color:white;letter-spacing:.15em"></div>
+          </div>
+        </div>
+
+        <!-- Scan button below image -->
+        <div style="margin-top:1rem;display:flex;gap:.75rem">
+          <button id="scan-btn" class="scan-btn"
+                  style="flex:1;padding:.75rem 1rem;border:1px solid rgba(124,77,255,.4);
+                         font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.3em;
+                         text-transform:uppercase;color:var(--v);background:transparent;cursor:pointer;
+                         transition:all .3s">
+            ⬡ SCAN ASSET
+          </button>
+          <button style="flex:1;padding:.75rem 1rem;border:1px solid rgba(0,229,255,.35);
+                         font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.3em;
+                         text-transform:uppercase;color:var(--c);background:transparent;cursor:pointer;
+                         transition:all .3s"
+                  onmouseover="this.style.borderColor='var(--c)';this.style.background='rgba(0,229,255,.08)'"
+                  onmouseout="this.style.borderColor='rgba(0,229,255,.35)';this.style.background='transparent'">
+            ◈ VERIFY ORIGIN
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT: Metadata + lore -->
+      <div class="rev-r">
+        <!-- Asset name heading -->
+        <div style="margin-bottom:1.5rem">
+          <div style="font-size:9px;letter-spacing:.4em;color:var(--v);text-transform:uppercase;margin-bottom:.6rem" id="vault-faction-label">Faction Alpha</div>
+          <h1 class="glitch" id="asset-heading" data-text="ASSET"
+              style="font-family:Orbitron,monospace;font-size:clamp(1.4rem,3vw,2.2rem);font-weight:800;color:white;letter-spacing:.15em;line-height:1.1;text-shadow:var(--gv)">
+            ASSET
+          </h1>
+          <div id="faction-badge-wrap" style="margin-top:1rem">
+            <span class="faction-badge" id="faction-badge">FACTION ALPHA</span>
+          </div>
+        </div>
+
+        <!-- Stats table -->
+        <div class="glass" style="padding:1.25rem;margin-bottom:1.5rem">
+          <div style="font-size:9px;color:var(--v);letter-spacing:.35em;text-transform:uppercase;margin-bottom:.75rem">// Protocol Metadata</div>
+          <div class="stat-row"><span class="stat-label">Asset ID</span><span class="stat-val" id="stat-id">—</span></div>
+          <div class="stat-row"><span class="stat-label">Type</span><span class="stat-val" id="stat-type">—</span></div>
+          <div class="stat-row"><span class="stat-label">Classification</span><span class="stat-val" id="stat-class" style="color:var(--asset-color)">—</span></div>
+          <div class="stat-row"><span class="stat-label">Status</span><span class="stat-val" id="stat-status">—</span></div>
+          <div class="stat-row"><span class="stat-label">Faction</span><span class="stat-val" id="stat-faction">—</span></div>
+          <div class="stat-row"><span class="stat-label">Network</span><span class="stat-val" style="color:var(--g)">MAINNET ●</span></div>
+          <div class="stat-row"><span class="stat-label">Protocol</span><span class="stat-val" style="color:var(--t3)">ax7-09140931</span></div>
+        </div>
+
+        <!-- Lore text -->
+        <div class="glass" style="padding:1.25rem;margin-bottom:1.5rem">
+          <div style="font-size:9px;color:var(--c);letter-spacing:.35em;text-transform:uppercase;margin-bottom:.75rem">// Archive Entry</div>
+          <p id="asset-lore" style="font-size:12px;color:var(--t2);line-height:2;letter-spacing:.03em">Loading encrypted data...</p>
+        </div>
+
+        <!-- Coordinates readout -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.5rem">
+          <div class="glass" style="padding:.75rem 1rem">
+            <div style="font-size:9px;color:var(--t3);letter-spacing:.25em;text-transform:uppercase;margin-bottom:.4rem">Vault Coord</div>
+            <div id="vault-coord" style="font-size:11px;color:var(--c);letter-spacing:.15em">0x0000—</div>
+          </div>
+          <div class="glass" style="padding:.75rem 1rem">
+            <div style="font-size:9px;color:var(--t3);letter-spacing:.25em;text-transform:uppercase;margin-bottom:.4rem">Epoch Minted</div>
+            <div style="font-size:11px;color:var(--v);letter-spacing:.15em" id="epoch-minted">0x00004F3A</div>
+          </div>
+        </div>
+
+        <!-- CTAs -->
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <a href="index.html#gallery"
+             style="display:flex;align-items:center;justify-content:center;gap:10px;
+                    padding:1rem;border:1px solid rgba(124,77,255,.5);
+                    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.3em;
+                    text-transform:uppercase;color:var(--v);text-decoration:none;
+                    transition:all .3s;background:rgba(124,77,255,.05)"
+             onmouseover="this.style.background='rgba(124,77,255,.15)';this.style.borderColor='var(--v)'"
+             onmouseout="this.style.background='rgba(124,77,255,.05)';this.style.borderColor='rgba(124,77,255,.5)'">
+            ⬡ Explore Full Collection
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="index.html"
+             style="display:flex;align-items:center;justify-content:center;gap:10px;
+                    padding:.75rem;border:1px solid rgba(255,255,255,.1);
+                    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.3em;
+                    text-transform:uppercase;color:var(--t3);text-decoration:none;
+                    transition:all .3s"
+             onmouseover="this.style.color='var(--t2)';this.style.borderColor='rgba(255,255,255,.2)'"
+             onmouseout="this.style.color='var(--t3)';this.style.borderColor='rgba(255,255,255,.1)'">
+            ← Return to Archive
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bottom: Related assets teaser -->
+    <div class="rev d5" style="margin-top:4rem;padding-top:3rem;border-top:1px solid rgba(124,77,255,.1)">
+      <div style="font-size:9px;color:var(--v);letter-spacing:.35em;text-transform:uppercase;margin-bottom:1.5rem">// Other Vault Entries</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem" id="related-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  ASSET DATA
+// ══════════════════════════════════════════════════════
+const ASSETS = {
+  '0001':{ name:'AXG-53815',   short:'AXG-53815',       type:'Guardian Asset',  cls:'VAULT CLASS A', status:'Active',    faction:'Alpha',     img:'images/legacy/card-01.webp', color:'#7c4dff', zone:'archive',
+    lore:'A primary vault-key bearer from the genesis block. AXG-53815 was among the first Guardians to authenticate the original Archive protocol. Their encrypted identity is permanently stamped into the chain at coordinate 0x0001. Holders of this asset gain access to restricted Archive chambers.' },
+  '0042':{ name:'audio_log_ax18116', short:'AUDIO LOG', type:'Audio Log',       cls:'ENCRYPTED',     status:'Live',      faction:'Unknown',   img:'images/legacy/card-02.webp', color:'#00e5ff', zone:'signal',
+    lore:'An intercepted audio transmission from deep within the Archive\'s core layer. The codec is only 47% decrypted — fragments of a voice warning about the NULL faction can be heard beneath layers of encryption. Full decryption requires three Faction Alpha keys.' },
+  '0084':{ name:'protocol_84.enc',   short:'PROTOCOL 84', type:'Protocol File', cls:'RESTRICTED',    status:'Locked',    faction:'Zeta',      img:'images/legacy/card-03.webp', color:'#ff2d55', zone:'war',
+    lore:'A classified protocol file sealed by the Zeta faction after the first protocol wars. Rumored to contain coordinates to the master null-point — the hidden origin of the VOIDGATE universe itself. Zeta agents will stop at nothing to recover this file.' },
+  '0116':{ name:'void_key_0xn7f',    short:'VOID KEY',   type:'Void Key',       cls:'MASTER KEY',    status:'Dormant',   faction:'NULL',      img:'images/legacy/card-04.webp', color:'#00ff9f', zone:'void',
+    lore:'The mythical key to the null-point. void_key_0xn7f was discovered in sector ruins and has never been fully activated. Guardians who possess it report anomalous data bleeding into their other assets — as if reality itself recognises the key\'s authority.' },
+  '0200':{ name:'VGT-Origin',        short:'VGT-ORIGIN',  type:'Faction Badge',  cls:'GENESIS',       status:'Rare',      faction:'Alpha',     img:'images/legacy/card-05.webp', color:'#7c4dff', zone:'archive',
+    lore:'The original VOIDGATE genesis badge — minted before the protocol split into factions. Only 200 exist. Holders are recognised as Founding Guardians across all faction territories, granting immunity in most contested sectors.' },
+  '0333':{ name:'Sector-7G',         short:'SECTOR 7G',   type:'World Asset',    cls:'TERRITORY',     status:'Contested', faction:'Contested', img:'images/legacy/card-06.webp', color:'#00e5ff', zone:'territory',
+    lore:'A contested territory on the encrypted frontier. Sector-7G has changed hands between Alpha and Zeta forces 42 times in a single epoch. Its coordinates encode the path to a dormant Archive relay station that could tip the balance of the protocol war.' },
+  'collection':{ name:'Genesis Collection', short:'GENESIS SET', type:'Collection', cls:'10,000 ASSETS', status:'Live', faction:'All',  img:'images/legacy/gallery-nft.webp', color:'#7c4dff', zone:'collection',
+    lore:'The complete VOIDGATE Genesis Set — 10,000 encrypted Guardian assets spread across all factions. Each asset is a key. Each key unlocks a fragment of the story. The full collection, when assembled, decodes the master protocol of the Archive.' },
+  'LOG-001':{ name:'The First Transmission', short:'LOG-001', type:'Dispatch',   cls:'FEATURED',      status:'Live Signal', faction:'Archive', img:'images/legacy/log-001.webp', color:'#7c4dff', zone:'dispatch',
+    lore:'The initial protocol broadcast from the VOIDGATE Archive. Intercepted by Guardian AXG-53815 at coordinate epoch 0x0000001. The signal carries the genesis hash of the entire universe — a pattern that, when decoded, reveals the identities of the founding faction leaders.' },
+  'LOG-042':{ name:'Faction War: Day 1',    short:'LOG-042',  type:'Combat Report', cls:'CONFLICT',    status:'Sealed',    faction:'Disputed', img:'images/legacy/log-002.webp', color:'#00e5ff', zone:'war',
+    lore:'Faction Alpha launches its first encrypted strike against Zeta across sector 7G. 847 guardians are displaced from their vaults. The archive records a 3.2% degradation in protocol integrity. The war that was meant to last one epoch has stretched across thousands.' },
+  'LOG-116':{ name:'The Void Key Surfaces', short:'LOG-116', type:'Discovery',   cls:'CRITICAL',      status:'Active',    faction:'NULL',      img:'images/legacy/log-003.webp', color:'#00ff9f', zone:'void',
+    lore:'Guardian designation [REDACTED] reports discovery of void_key_0xn7f in the corrupted node ruins of sector 12A. The NULL faction immediately mobilises three battalion-level strike teams. Protocol threat level elevated to CRITICAL. All guardians ordered to secure their vaults.' },
+  'EP-001':{ name:'Origin Story',           short:'EP.001',   type:'Transmission', cls:'EPISODE',      status:'Live',      faction:'Archive', img:'images/legacy/media-01.webp', color:'#7c4dff', zone:'transmission',
+    lore:'The encrypted genesis of the VOIDGATE universe. How the Archive was built. How the first 10,000 Guardians were chosen. The protocol that set the void in motion. This transmission contains the blueprint from which all VOIDGATE lore descends.' },
+  'EP-002':{ name:'Faction Reveal',         short:'EP.002',   type:'Transmission', cls:'EPISODE',      status:'Classified', faction:'Archive', img:'images/legacy/media-02.webp', color:'#00e5ff', zone:'transmission',
+    lore:'Alpha versus Zeta. The two factions emerge from the encrypted void and clash for control of the master protocol. Alliances fracture. The archive burns. This transmission was classified immediately after release — 847 copies were scrubbed from the network.' },
+};
+
+const RELATED = {
+  '0001':['0042','0116','LOG-001'],
+  '0042':['0001','0084','LOG-042'],
+  '0084':['0042','0116','LOG-042'],
+  '0116':['0084','0333','LOG-116'],
+  '0200':['0001','0333','EP-001'],
+  '0333':['0116','0200','EP-002'],
+  'collection':['0001','0200','EP-001'],
+  'LOG-001':['0001','EP-001','0200'],
+  'LOG-042':['0042','0084','EP-002'],
+  'LOG-116':['0116','LOG-042','EP-002'],
+  'EP-001':['LOG-001','0001','0200'],
+  'EP-002':['LOG-042','LOG-116','0333'],
+};
+
+// ── Parse URL ─────────────────────────────────────────
+const urlId  = new URLSearchParams(location.search).get('id') || '0001';
+const asset  = ASSETS[urlId] || ASSETS['0001'];
+const routeFx = new URLSearchParams(location.search).get('fx') || 'warp';
+const routeZone = new URLSearchParams(location.search).get('zone') || asset.zone || 'archive';
+const ZONES = {
+  archive:{ bg1:'#120d24', bg2:'#1b1434', bg3:'#18112d', bg4:'rgba(255,255,255,.14)', bg5:'rgba(124,77,255,.22)', accent:'#7c4dff' },
+  signal:{ bg1:'#071825', bg2:'#0b2231', bg3:'#0b1927', bg4:'rgba(157,239,255,.16)', bg5:'rgba(0,229,255,.18)', accent:'#00e5ff' },
+  war:{ bg1:'#220d17', bg2:'#32111f', bg3:'#1d0d15', bg4:'rgba(255,255,255,.08)', bg5:'rgba(255,45,85,.22)', accent:'#ff2d55' },
+  void:{ bg1:'#071a16', bg2:'#0d2a24', bg3:'#0b1917', bg4:'rgba(220,255,245,.1)', bg5:'rgba(0,255,159,.18)', accent:'#00ff9f' },
+  territory:{ bg1:'#101629', bg2:'#162447', bg3:'#0d1527', bg4:'rgba(220,236,255,.12)', bg5:'rgba(0,229,255,.14)', accent:'#00e5ff' },
+  collection:{ bg1:'#170f27', bg2:'#231443', bg3:'#140d21', bg4:'rgba(255,255,255,.14)', bg5:'rgba(183,146,255,.18)', accent:'#b792ff' },
+  dispatch:{ bg1:'#180f2a', bg2:'#261743', bg3:'#151023', bg4:'rgba(255,255,255,.12)', bg5:'rgba(124,77,255,.22)', accent:'#a789ff' },
+  transmission:{ bg1:'#14122c', bg2:'#1d1d46', bg3:'#111325', bg4:'rgba(255,255,255,.14)', bg5:'rgba(0,229,255,.16)', accent:'#9defff' }
+};
+const zoneTheme = ZONES[routeZone] || ZONES.archive;
+
+// ── Apply asset color to CSS variable ─────────────────
+document.documentElement.style.setProperty('--asset-color', asset.color);
+document.documentElement.style.setProperty('--bg1', zoneTheme.bg1);
+document.documentElement.style.setProperty('--bg2', zoneTheme.bg2);
+document.documentElement.style.setProperty('--bg3', zoneTheme.bg3);
+document.documentElement.style.setProperty('--bg4', zoneTheme.bg4);
+document.documentElement.style.setProperty('--bg5', zoneTheme.bg5);
+document.documentElement.style.setProperty('--zone-glow', zoneTheme.accent);
+
+// ══════════════════════════════════════════════════════
+//  THREE.JS BACKGROUND (same space scene)
+// ══════════════════════════════════════════════════════
+(function initSpace(){
+  const canvas   = document.getElementById('bg-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth, innerHeight);
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(65, innerWidth/innerHeight, 0.1, 500);
+  camera.position.set(0, -10, 22);
+  addEventListener('resize',()=>{ renderer.setSize(innerWidth,innerHeight); camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); });
+  function mkPts(n,r0,r1,cA,cB,sz,op,yO){
+    const pos=new Float32Array(n*3),col=new Float32Array(n*3);
+    const ca=new THREE.Color(cA),cb=new THREE.Color(cB);
+    for(let i=0;i<n;i++){
+      const r=r0+Math.random()*(r1-r0),th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1);
+      pos[i*3]=r*Math.sin(ph)*Math.cos(th); pos[i*3+1]=r*Math.sin(ph)*Math.sin(th)+yO; pos[i*3+2]=r*Math.cos(ph);
+      const c=ca.clone().lerp(cb,Math.random()); col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b;
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+    return new THREE.Points(geo,new THREE.PointsMaterial({vertexColors:true,size:sz,transparent:true,opacity:op,sizeAttenuation:true}));
+  }
+  const s1=mkPts(5000,80,220,'#ffffff','#d4e4ff',.22,.75,-10); scene.add(s1);
+  const n0=mkPts(2800,18,40, asset.color,'#00e5ff',.14,.65,-10); scene.add(n0);
+  const n1=mkPts(1200,14,30,'#00e5ff',asset.color,.11,.55,-10); scene.add(n1);
+  const dust=mkPts(1800,16,36,'#ffffff',asset.color,.07,.14,-10); scene.add(dust);
+  function mkIco(r,d,clr,op,x,y,z){
+    const m=new THREE.Mesh(new THREE.IcosahedronGeometry(r,d),new THREE.MeshBasicMaterial({color:clr,wireframe:true,transparent:true,opacity:op}));
+    m.position.set(x,y,z); scene.add(m); return m;
+  }
+  const ico0=mkIco(7.5,1,0x00e5ff,.22,0,-10,0);
+  const ico1=mkIco(4.8,0,new THREE.Color(asset.color).getHex(),.32,0,-10,0);
+  const ico2=mkIco(3.5,0,0x00e5ff,.28,8,-6,-4);
+  const ico3=mkIco(2.8,0,0x7c4dff,.30,-7,-14,3);
+  function mkCrystal(scaleY,clr,op,x,y,z){
+    const m=new THREE.Mesh(new THREE.OctahedronGeometry(1,0),new THREE.MeshBasicMaterial({color:clr,wireframe:true,transparent:true,opacity:op}));
+    m.scale.set(1.1,scaleY,1.1); m.position.set(x,y,z); scene.add(m); return m;
+  }
+  const cryA=mkCrystal(4.8,new THREE.Color(asset.color).getHex(),.16,-10,-7,1);
+  const cryB=mkCrystal(6.2,0x00e5ff,.14,11,-13,-4);
+  function mkTor(r,t,clr,op,x,y,z,rx,rz){
+    const m=new THREE.Mesh(new THREE.TorusGeometry(r,t,8,80),new THREE.MeshBasicMaterial({color:clr,transparent:true,opacity:op}));
+    m.position.set(x,y,z); m.rotation.x=rx; m.rotation.z=rz; scene.add(m); return m;
+  }
+  const tor0=mkTor(10,.05,0x7c4dff,.38,0,-10,0,Math.PI*.35,0);
+  const tor1=mkTor(6.5,.04,0x00e5ff,.32,0,-10,0,-Math.PI*.52,Math.PI*.22);
+  function mkRelic(clr,op,x,y,z){
+    const g=new THREE.Group();
+    const outer=new THREE.Mesh(new THREE.TorusGeometry(2.2,.035,10,84),new THREE.MeshBasicMaterial({color:clr,transparent:true,opacity:op}));
+    const inner=new THREE.Mesh(new THREE.TorusGeometry(1.05,.025,10,64),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:op*.6}));
+    inner.rotation.x=Math.PI*.48; inner.rotation.y=Math.PI*.18;
+    const core=new THREE.Mesh(new THREE.OctahedronGeometry(.34,0),new THREE.MeshBasicMaterial({color:clr,wireframe:true,transparent:true,opacity:op*.85}));
+    g.add(outer,inner,core); g.position.set(x,y,z); scene.add(g); return g;
+  }
+  const relic=mkRelic(new THREE.Color(asset.color).getHex(),.22,8,-9,-6);
+  let mX=0,mY=0,cX=0,cY=0;
+  addEventListener('mousemove',e=>{mX=(e.clientX/innerWidth-.5)*2;mY=(e.clientY/innerHeight-.5)*2});
+  (function loop(){
+    requestAnimationFrame(loop);
+    n0.rotation.y+=.0004; n1.rotation.y-=.0003; dust.rotation.y+=.00018; dust.rotation.x-=.00004; s1.rotation.y+=.00005;
+    ico0.rotation.x+=.002; ico0.rotation.y+=.0035;
+    ico1.rotation.x-=.004; ico1.rotation.y-=.006;
+    ico2.rotation.x+=.003; ico2.rotation.y+=.004;
+    ico3.rotation.x-=.005; ico3.rotation.y+=.003;
+    cryA.rotation.y+=.0014; cryA.rotation.z+=.0008;
+    cryB.rotation.x-=.0011; cryB.rotation.y+=.0016;
+    tor0.rotation.z+=.0025; tor1.rotation.z-=.002; tor1.rotation.y+=.0015;
+    relic.rotation.y+=.003; relic.rotation.x+=.0012;
+    cryA.position.y=-7+Math.sin(Date.now()*.0012)*.6;
+    cryB.position.y=-13+Math.sin(Date.now()*.0011+1.5)*.8;
+    relic.position.y=-9+Math.sin(Date.now()*.0015+.7)*.5;
+    cX+=(mX*2-cX)*.04; cY+=(-mY*1.5-cY)*.04;
+    camera.position.x=cX; camera.position.y=-10+cY;
+    camera.lookAt(new THREE.Vector3(cX*.1,-10,0));
+    renderer.render(scene,camera);
+  })();
+})();
+
+// ══════════════════════════════════════════════════════
+//  DECRYPT SEQUENCE
+// ══════════════════════════════════════════════════════
+const decCanvas = document.getElementById('decrypt-canvas');
+const dCtx      = decCanvas.getContext('2d');
+decCanvas.width = innerWidth; decCanvas.height = innerHeight;
+const chars = '01アイウエオカキクケコ∞◆▲◈⬡░▓█ABCDEF0123456789';
+const cols  = Math.floor(decCanvas.width / 14);
+const drops = Array(cols).fill(1);
+
+function drawMatrix(){
+  dCtx.fillStyle = 'rgba(4,2,26,.08)';
+  dCtx.fillRect(0, 0, decCanvas.width, decCanvas.height);
+  dCtx.font = '13px IBM Plex Mono';
+  for(let i=0;i<drops.length;i++){
+    const char = chars[Math.floor(Math.random()*chars.length)];
+    const hue  = Math.random() > .7 ? '#7c4dff' : (Math.random()>.5?'#00e5ff':'rgba(124,77,255,.35)');
+    dCtx.fillStyle = hue;
+    dCtx.fillText(char, i*14, drops[i]*14);
+    if(drops[i]*14 > decCanvas.height && Math.random() > .975) drops[i] = 0;
+    drops[i]++;
+  }
+}
+const matrixAnim = setInterval(drawMatrix, 45);
+
+const statuses = [
+  'INITIALIZING VAULT BREACH...',
+  'AUTHENTICATING GUARDIAN...',
+  'CROSS-REFERENCING PROTOCOL...',
+  'DECRYPTING ASSET DATA...',
+  'VAULT INTEGRITY VERIFIED...',
+  'ACCESS GRANTED',
+];
+const logs = [
+  '> voidgate.core .......... [OK]',
+  '> guardian.auth .......... [OK]',
+  '> protocol.dec ........... [OK]',
+  '> asset.manifest ......... [OK]',
+  '> vault.unlock ........... [OK]',
+];
+
+let pct=0, si=0;
+const bar = document.getElementById('decrypt-bar');
+const stat= document.getElementById('decrypt-status');
+const log = document.getElementById('decrypt-log');
+
+const decryptTick = setInterval(()=>{
+  pct = Math.min(100, pct + Math.random()*14 + 4);
+  bar.style.width = pct + '%';
+  const newSi = Math.floor((pct/100)*statuses.length);
+  if(newSi !== si && newSi < statuses.length){ si=newSi; stat.textContent=statuses[si]; }
+  const li = Math.floor((pct/100)*logs.length);
+  if(li < logs.length){ log.innerHTML = logs.slice(0,li+1).join('<br>'); }
+  if(pct>=100){
+    clearInterval(decryptTick);
+    stat.textContent = 'VAULT UNLOCKED ✓';
+    stat.style.color = 'var(--g)';
+    setTimeout(vaultReveal, 600);
+  }
+}, 80);
+
+function vaultReveal(){
+  clearInterval(matrixAnim);
+  // Flash
+  const fl = document.getElementById('vault-opened');
+  fl.style.opacity = '0.45';
+  setTimeout(()=>fl.style.opacity='0', 400);
+  // Hide overlay
+  const ov = document.getElementById('decrypt-overlay');
+  ov.style.transition = 'opacity .6s ease';
+  ov.style.opacity = '0';
+  setTimeout(()=>{ ov.style.display='none'; populateContent(); document.getElementById('vault-content').classList.add('visible'); }, 700);
+}
+
+// ══════════════════════════════════════════════════════
+//  POPULATE CONTENT
+// ══════════════════════════════════════════════════════
+function populateContent(){
+  document.title = asset.short + ' â€” VOIDGATE VAULT';
+  document.getElementById('decrypt-status').textContent =
+    routeFx === 'scan' ? 'CALIBRATING SCAN GATE...' :
+    routeFx === 'shard' ? 'ASSEMBLING SHARD PORTAL...' :
+    routeFx === 'pulse' ? 'CHARGING NULL PULSE...' :
+    routeFx === 'eclipse' ? 'OPENING ECLIPSE RIFT...' :
+    'INITIALIZING WARP GATE...';
+  // Image
+  document.getElementById('asset-img').src = asset.img;
+  document.getElementById('asset-img').alt  = asset.name;
+  document.getElementById('asset-img').onerror = function(){
+    document.getElementById('asset-frame').style.background =
+      'linear-gradient(135deg,rgba(124,77,255,.18),rgba(0,229,255,.08))';
+  };
+
+  // Labels
+  document.getElementById('asset-num-tag').textContent  = '#' + urlId;
+  document.getElementById('asset-class-tag').textContent = '// ' + asset.cls;
+  document.getElementById('asset-name-bottom').textContent = asset.short;
+  document.getElementById('vault-type-label').textContent  = '// ' + asset.type;
+  document.getElementById('vault-id-label').textContent    = asset.short;
+  document.getElementById('vault-faction-label').textContent = 'Faction ' + asset.faction;
+
+  // Heading with glitch
+  const h = document.getElementById('asset-heading');
+  h.textContent = asset.short;
+  h.setAttribute('data-text', asset.short);
+
+  // Faction badge
+  const fb = document.getElementById('faction-badge');
+  fb.textContent = 'Faction ' + asset.faction;
+  fb.style.borderColor = asset.color;
+  fb.style.color = asset.color;
+
+  // Stats
+  document.getElementById('stat-id').textContent    = '#' + urlId;
+  document.getElementById('stat-type').textContent  = asset.type;
+  document.getElementById('stat-class').textContent = asset.cls;
+  document.getElementById('stat-status').textContent = asset.status;
+  document.getElementById('stat-faction').textContent = asset.faction;
+
+  // Lore
+  document.getElementById('asset-lore').textContent = asset.lore;
+
+  // Coord + epoch
+  document.getElementById('vault-coord').textContent  = '0x' + urlId.padStart(6,'0');
+  document.getElementById('epoch-minted').textContent = '0x' + (parseInt(urlId,16)||Math.floor(Math.random()*0xFFFF)).toString(16).toUpperCase().padStart(8,'0');
+
+  // Related
+  const relIds = RELATED[urlId] || ['0001','0042','0200'];
+  const grid   = document.getElementById('related-grid');
+  relIds.forEach(rid=>{
+    const a = ASSETS[rid]; if(!a) return;
+    const card = document.createElement('div');
+    card.style.cssText = 'border:1px solid rgba(124,77,255,.22);background:rgba(124,77,255,.05);padding:.75rem;cursor:pointer;transition:all .3s';
+    card.innerHTML = `
+      <div style="aspect-ratio:1;overflow:hidden;margin-bottom:.6rem;position:relative">
+        <img src="${a.img}" style="width:100%;height:100%;object-fit:cover;opacity:.8;transition:transform .5s,opacity .3s"
+             onerror="this.parentElement.style.background='rgba(124,77,255,.1)'">
+        <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,.015) 3px,rgba(0,229,255,.015) 4px)"></div>
+      </div>
+      <div style="font-size:9px;color:var(--t3);letter-spacing:.2em;text-transform:uppercase;margin-bottom:4px">${a.type}</div>
+      <div style="font-size:11px;color:white;font-family:'IBM Plex Mono',monospace;margin-bottom:4px">${a.short}</div>
+      <div style="font-size:9px;color:${a.color};letter-spacing:.25em;text-transform:uppercase">${a.cls}</div>`;
+    card.addEventListener('mouseover',()=>{ card.style.borderColor='rgba(124,77,255,.55)'; card.style.background='rgba(124,77,255,.12)'; const img=card.querySelector('img'); if(img){img.style.transform='scale(1.06)';img.style.opacity='1'} });
+    card.addEventListener('mouseout', ()=>{ card.style.borderColor='rgba(124,77,255,.22)'; card.style.background='rgba(124,77,255,.05)'; const img=card.querySelector('img'); if(img){img.style.transform='';img.style.opacity='.8'} });
+    card.addEventListener('click',()=>{ location.href='vault.html?id='+encodeURIComponent(rid)+'&zone='+encodeURIComponent(a.zone || 'archive')+'&fx=warp'; });
+    grid.appendChild(card);
+  });
+
+  // Asset image tilt
+  const frame = document.getElementById('asset-frame');
+  frame.addEventListener('mousemove',e=>{
+    const r=frame.getBoundingClientRect();
+    const x=((e.clientX-r.left)/r.width-.5)*2;
+    const y=((e.clientY-r.top)/r.height-.5)*2;
+    frame.style.transform=`perspective(800px) rotateY(${x*8}deg) rotateX(${-y*8}deg) scale(1.01)`;
+    frame.style.transition='transform .1s linear';
+  });
+  frame.addEventListener('mouseleave',()=>{ frame.style.transform=''; frame.style.transition='transform .5s ease'; });
+
+  // Scan button
+  document.getElementById('scan-btn').addEventListener('click',()=>{
+    const sl = document.getElementById('scan-line');
+    sl.classList.remove('active');
+    void sl.offsetWidth; // reflow
+    sl.classList.add('active');
+    setTimeout(()=>sl.classList.remove('active'), 2000);
+  });
+}
+
+// ── Mobile responsive: stack columns on small screens ─
+if(innerWidth < 768){
+  document.querySelector('.rev-l').style.gridTemplateColumns = '1fr';
+}
+</script>
+</body>
+</html>
